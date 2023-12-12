@@ -59,15 +59,23 @@ channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0
 channel_secret = '63cab70334966c3908e47bf86edcfbe7'
 ngrok_url = 'https://oasis.pyrarc.com'
 
-firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
+# firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
 # firebase_url = 'https://test-10dad-default-rtdb.firebaseio.com/'
 
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://6f0d-211-72-15-211.ngrok-free.app'
+# ngrok_url = 'https://62b8-211-72-15-212.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
+
+
+# line token 星雲大師說 for Gemini
+channel_access_token_g = '4SnYcxE2d4Wd6IhzL1chHJZB/h/UF/xeXPCemU+FZYwL6Tm1I8YPh1AsSAhzHCrM9j5INbeSvoSht/IKtfEgh0P2v5mUPWRPSK7g6B8S/iepm2dh3X/pFMkbjhJQn56hpXOyGEnYZOZb1EvWO4QrtAdB04t89/1O/w1cDnyilFU='
+channel_secret_g = 'b0954d8eb5bb8941f6cb71e64ceba892'
+ngrok_url_g = 'https://62b8-211-72-15-212.ngrok-free.app'
+line_bot_api_g = LineBotApi(channel_access_token_g)
+handler_g = WebhookHandler(channel_secret_g)
 
 app = Flask(__name__, static_folder='image/static', template_folder='templates', static_url_path='/static')
 
@@ -128,7 +136,7 @@ def home():
     response = model.generate_content('Please summarise this document: ...')
     return response.text
 
-
+# 星雲版
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -219,6 +227,99 @@ def handle_message(event):
                 reply_msg = "我想想，可否更具體的描述呢？"
         message = TextSendMessage(text=reply_msg)
         line_bot_api.reply_message(event.reply_token, message)
+
+
+# Gemini
+# 監聽所有來自 /callback 的 Post Request
+@app.route("/g/callback", methods=['POST'])
+def callback_g():
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+    # handle webhook body
+    try:
+        handler_g.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
+
+@handler_g.add(MessageEvent, message=TextMessage)
+def handle_message_g(event):
+    # echo
+    msg = event.message.text
+    user_id = event.source.user_id
+    reply_msg = ''
+    line_ids = get_line_id_list()
+    current_app.logger.info(f' line_ids  發生錯誤: {line_ids}')
+    # 用firebase儲存對話資料
+    # fdb = firebase.FirebaseApplication(firebase_url, None)
+    # user_chat_path = f'chat/{user_id}'
+    # chat_state_path = f'state/{user_id}'
+    # chat_firebase = fdb.get(user_chat_path, None)
+    if user_id not in line_ids:
+        message = TextSendMessage(text='目前未開通服務，請拷貝本文字或是截圖後、請傳給開發商開通服務\n\n' + user_id)
+        line_bot_api.reply_message(event.reply_token, message)
+        lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + user_id + "\n用戶傳送文字： \n" + msg)
+    elif msg.startswith('/cmdadd'):
+        account_msg = msg.split(' ')
+        if account_msg[1]:
+            save_account_to_file(account_msg[1])
+            message = TextSendMessage(text='已添加ID: ' + account_msg[1])
+            line_bot_api.reply_message(event.reply_token, message)
+        else:
+            message = TextSendMessage(text='該命令缺乏ＩＤ值，無法解析')
+            line_bot_api.reply_message(event.reply_token, message)
+    elif msg.startswith('/cmddel'):
+        account_msg = msg.split(' ')
+        if account_msg[1] == 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe':
+            message = TextSendMessage(text='管理帳號 不得刪除')
+            line_bot_api.reply_message(event.reply_token, message)
+        elif account_msg[1]:
+            delete_account_to_file(account_msg[1])
+            message = TextSendMessage(text='已移除ID: ' + account_msg[1])
+            line_bot_api.reply_message(event.reply_token, message)
+        else:
+            message = TextSendMessage(text='該ＩＤ以存在')
+            line_bot_api.reply_message(event.reply_token, message)
+    else:
+        if msg.startswith('/美股'):
+            reply_msg = us()
+        elif msg.startswith('/長輩圖'):
+            files_lists = os.listdir('image/static/')
+            if files_lists:
+                files_lists_count = len(files_lists)
+            pic_name = choice(files_lists)
+            image = ImageSendMessage(original_content_url=ngrok_url + "/static/" + pic_name,
+                                     preview_image_url=ngrok_url + "/static/" + pic_name)
+            line_bot_api.reply_message(event.reply_token, image)
+            reply_msg = "今日長輩圖"
+        else:
+            # model = genai.GenerativeModel('gemini-pro')
+            # response = model.generate_content(msg)
+            #if chat_firebase is None:
+            messages = []
+            #else:
+            #    messages = chat_firebase
+            response_text = get_chat_model_text_from_gemini(msg, messages)
+            try:
+                print(response_text)
+                app.logger.info("Response text: " + response_text)
+                reply_msg = response_text
+                # messages.append({"author": "user", "content": msg})
+                # messages.append({"author": "assistant", "content": reply_msg})
+                # 更新firebase中的對話紀錄
+                # fdb.put_async(user_chat_path, None, messages)
+                # print(response.text)
+                # reply_msg = response.text
+            except ValueError:
+                # If the response doesn't contain text, check if the prompt was blocked.
+                print(response.prompt_feedback)
+                reply_msg = "我想想，可否更具體的描述呢？"
+        message = TextSendMessage(text=reply_msg)
+        line_bot_api_g.reply_message(event.reply_token, message)
 
 
 # 保存帳號到文件
@@ -614,6 +715,33 @@ def get_chat_model_text(content: str, messages):
     print("bot: " + response.text)
     return response.text.lstrip()
 
+
+def get_chat_model_text_from_gemini(content: str, messages):
+    credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
+    vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
+    model = GenerativeModel(
+        "projects/198854013711/locations/us-central1/endpoints/7203830860397674496",
+        system_instruction=["""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+    不回答非佛教問題
+    非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識“"""]
+    )
+    generation_config = {
+        "max_output_tokens": 2048,
+        "temperature": 1,
+        "top_p": 1,
+    }
+
+    safety_settings = {
+        generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    }
+    chat = model.start_chat()
+    response = chat.send_message(content, generation_config=generation_config, safety_settings=safety_settings)
+    print(response)
+    print("bot: " + response.text)
+    return response.text.lstrip()
 
 def predict_text_entity_extraction_sample(
         project: str,
