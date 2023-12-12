@@ -1,3 +1,7 @@
+import json
+from urllib import request
+
+import proto
 import requests as requests
 from flask import Flask, current_app
 from bs4 import BeautifulSoup
@@ -7,16 +11,70 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
+import google.generativeai as genai
+import os
+
+# coding: utf-8
+from flask import Flask, request, abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+
+# line token
+channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
+channel_secret = '63cab70334966c3908e47bf86edcfbe7'
+line_bot_api = LineBotApi(channel_access_token)
+handler = WebhookHandler(channel_secret)
+
 app = Flask(__name__)
+
+genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
 
 @app.route("/", methods=['GET'])
 def home():
-    return 'Hello World'
+    model = genai.GenerativeModel('gemini-pro')
+    response = model.generate_content('Please summarise this document: ...')
+    return response.text
 
-#fred
+
+# 監聽所有來自 /callback 的 Post Request
+@app.route("/callback", methods=['POST'])
+def callback():
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    # echo
+    msg = event.message.text
+    model = genai.GenerativeModel('gemini-pro')
+    response = model.generate_content(msg)
+    reply_msg = ''
+    try:
+        print(response.text)
+        reply_msg = response.text
+    except ValueError:
+        # If the response doesn't contain text, check if the prompt was blocked.
+        print(response.prompt_feedback)
+        reply_msg ="我想想，可否更具體的描述呢？"
+    message = TextSendMessage(text=reply_msg)
+    line_bot_api.reply_message(event.reply_token, message)
+
+
+# fred
 @app.route('/test')
 def hello_world():
     lineNotifyMessage(LINE_TOKEN, '歡迎登入系統')
