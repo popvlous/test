@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
-
+#fred
 @app.route('/')
 def hello_world():
     lineNotifyMessage(LINE_TOKEN, '歡迎登入系統')
