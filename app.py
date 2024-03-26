@@ -11,8 +11,13 @@ app = Flask(__name__)
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
+
+@app.route("/", methods=['GET'])
+def home():
+    return 'Hello World'
+
 #fred
-@app.route('/')
+@app.route('/test')
 def hello_world():
     lineNotifyMessage(LINE_TOKEN, '歡迎登入系統')
     sendActionRecordJob()
