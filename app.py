@@ -66,12 +66,40 @@ def handle_message(event):
     try:
         print(response.text)
         reply_msg = response.text
+        if reply_msg.startswith('/美股'):
+            reply_msg = us()
     except ValueError:
         # If the response doesn't contain text, check if the prompt was blocked.
         print(response.prompt_feedback)
-        reply_msg ="我想想，可否更具體的描述呢？"
+        reply_msg = "我想想，可否更具體的描述呢？"
     message = TextSendMessage(text=reply_msg)
     line_bot_api.reply_message(event.reply_token, message)
+
+
+# fred
+@app.route('/us')
+def us():
+    lineNotifyMessage(LINE_TOKEN, '獲取美國股市指數')
+    url = "https://tw.stock.yahoo.com/markets"
+    web = requests.get(url)  # 取得網頁內容
+    soup = BeautifulSoup(web.text, "html.parser")  # 轉換內容
+    try:
+        result = ''
+        tdlist = []
+        result_list = []
+        tr = soup.find_all(class_="D(f) Fxw(w) Fw(600) Mb(8px) Lh(n)", limit=6)
+        for trr in tr:
+            tdlist.append(trr.text)
+        for i in range(len(tdlist)):
+            result += str(tdlist[i]).strip() + ';'
+        result_list = result.split(';')
+        lineNotifyMessage(LINE_TOKEN, f' 國際指數: \n\n道瓊工業指數: {result_list[0]}, \n\nSP 500指數: {result_list[1]}, \n\nNASDAQ指數: {result_list[2]}, \n\n費城半導體指數: {result_list[3]}, \n\n日經225指數: {result_list[4]}, \n\n香港恒生指數: {result_list[5]}')
+        lineNotifyMessage(LINE_TOKEN, f' 溫馨提醒: 國際指數，抓取資料完畢 ')
+        return f' 國際指數: \n\n道瓊工業指數: {result_list[0]}, \n\nSP 500指數: {result_list[1]}, \n\nNASDAQ指數: {result_list[2]}, \n\n費城半導體指數: {result_list[3]}, \n\n日經225指數: {result_list[4]}, \n\n香港恒生指數: {result_list[5]}'
+    except Exception as err:
+        current_app.logger.error(f'sendActionRecord 發生錯誤: {err}')
+        lineNotifyMessage(LINE_TOKEN, f'溫馨提醒: https://www.taifex.com.tw/cht/3/futContractsDate 發生錯誤: {err}')
+        return err
 
 
 # fred
