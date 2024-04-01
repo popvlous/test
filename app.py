@@ -18,7 +18,8 @@ import os
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
+from random import choice
 
 # line token
 channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
@@ -26,11 +27,13 @@ channel_secret = '63cab70334966c3908e47bf86edcfbe7'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='image/static', static_url_path='/static')
 
 genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
+
+ngrok_url = 'https://f81a-211-72-15-212.ngrok-free.app/'
 
 
 @app.route("/", methods=['GET'])
@@ -63,6 +66,15 @@ def handle_message(event):
     reply_msg = ''
     if msg.startswith('/美股'):
         reply_msg = us()
+    elif msg.startswith('/長輩圖'):
+        files_lists = os.listdir('image/static/')
+        if files_lists:
+            files_lists_count = len(files_lists)
+        pic_name = choice(files_lists)
+        image = ImageSendMessage(original_content_url=ngrok_url + "/static/" + pic_name,
+                                 preview_image_url=ngrok_url + "/static/" + pic_name)
+        line_bot_api.reply_message(event.reply_token, image)
+        reply_msg = "今日長輩圖"
     else:
         model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(msg)
@@ -94,7 +106,8 @@ def us():
         for i in range(len(tdlist)):
             result += str(tdlist[i]).strip() + ';'
         result_list = result.split(';')
-        lineNotifyMessage(LINE_TOKEN, f' 國際指數: \n\n道瓊工業指數: {result_list[0]}, \n\nSP 500指數: {result_list[1]}, \n\nNASDAQ指數: {result_list[2]}, \n\n費城半導體指數: {result_list[3]}, \n\n日經225指數: {result_list[4]}, \n\n香港恒生指數: {result_list[5]}')
+        lineNotifyMessage(LINE_TOKEN,
+                          f' 國際指數: \n\n道瓊工業指數: {result_list[0]}, \n\nSP 500指數: {result_list[1]}, \n\nNASDAQ指數: {result_list[2]}, \n\n費城半導體指數: {result_list[3]}, \n\n日經225指數: {result_list[4]}, \n\n香港恒生指數: {result_list[5]}')
         lineNotifyMessage(LINE_TOKEN, f' 溫馨提醒: 國際指數，抓取資料完畢 ')
         return f' 國際指數: \n\n道瓊工業指數: {result_list[0]}, \n\nSP 500指數: {result_list[1]}, \n\nNASDAQ指數: {result_list[2]}, \n\n費城半導體指數: {result_list[3]}, \n\n日經225指數: {result_list[4]}, \n\n香港恒生指數: {result_list[5]}'
     except Exception as err:
