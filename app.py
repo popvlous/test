@@ -60,18 +60,19 @@ def callback():
 def handle_message(event):
     # echo
     msg = event.message.text
-    model = genai.GenerativeModel('gemini-pro')
-    response = model.generate_content(msg)
     reply_msg = ''
-    try:
-        print(response.text)
-        reply_msg = response.text
-        if reply_msg.startswith('/美股'):
-            reply_msg = us()
-    except ValueError:
-        # If the response doesn't contain text, check if the prompt was blocked.
-        print(response.prompt_feedback)
-        reply_msg = "我想想，可否更具體的描述呢？"
+    if msg.startswith('/美股'):
+        reply_msg = us()
+    else:
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(msg)
+        try:
+            print(response.text)
+            reply_msg = response.text
+        except ValueError:
+            # If the response doesn't contain text, check if the prompt was blocked.
+            print(response.prompt_feedback)
+            reply_msg = "我想想，可否更具體的描述呢？"
     message = TextSendMessage(text=reply_msg)
     line_bot_api.reply_message(event.reply_token, message)
 
