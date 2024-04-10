@@ -1,4 +1,5 @@
 import json
+import string
 from urllib import request
 
 import proto
@@ -13,6 +14,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 import google.generativeai as genai
 import os
+import fitz
+import re
+from opencc import OpenCC
+from pypdf import PdfReader
 
 # coding: utf-8
 from flask import Flask, request, abort
@@ -34,6 +39,16 @@ genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
 ngrok_url = 'https://f81a-211-72-15-212.ngrok-free.app/'
+
+
+def s2twp_converter(simplified_text):
+    # 創建 OpenCC 物件，指定簡體到臺灣繁體的轉換
+    cc = OpenCC('s2twp')
+
+    # 使用 convert 方法進行轉換
+    traditional_text = cc.convert(simplified_text)
+
+    return traditional_text
 
 
 @app.route("/", methods=['GET'])
@@ -114,6 +129,41 @@ def us():
         current_app.logger.error(f'sendActionRecord 發生錯誤: {err}')
         lineNotifyMessage(LINE_TOKEN, f'溫馨提醒: https://www.taifex.com.tw/cht/3/futContractsDate 發生錯誤: {err}')
         return err
+
+
+def is_punctuation(char):
+    return char in string.punctuation
+
+
+@app.route('/pdf')
+def pdf():
+    doc = fitz.open('doc/change.pdf')
+    path = 'doc/output.txt'
+    f = open(path, 'w')
+    text = ""
+    for page in doc:
+        text += page.get_text()
+        temp = re.sub('[a-zA-Z0-9]', '', page.get_text())
+        str1 = re.sub('[\n]+', '\n', temp)
+        str1 = str1.strip()
+        new_text = s2twp_converter(str1.replace(",", "").replace(".", "").replace(";", "").replace("?", "").replace(":", "").replace("'","").replace("~", "").replace("《佛先菜根谭》", "").replace("（丣英对照版）", "").replace("-", "").replace(".\n", "").replace("()", ""))
+        f.write(new_text)
+    print(text)
+    f.close()
+
+    # coding:utf-8
+
+    file1 = open(path, 'r', encoding='utf-8')  # 打开要去掉空行的文件
+    file2 = open('doc/new_output.txt', 'w', encoding='utf-8')  # 生成没有空行的文件
+
+    for text in file1.readlines():
+        if text.split():
+            file2.write(text)
+
+    file1.close()
+    file2.close()
+
+    return "finish"
 
 
 # fred
