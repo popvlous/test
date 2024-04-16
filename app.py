@@ -18,6 +18,11 @@ import fitz
 import re
 from opencc import OpenCC
 from pypdf import PdfReader
+import PyPDF2
+import time
+import fitz
+import pytesseract
+from PIL import Image
 
 # coding: utf-8
 from flask import Flask, request, abort
@@ -40,6 +45,9 @@ LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
 ngrok_url = 'https://f81a-211-72-15-212.ngrok-free.app/'
 
+pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
+
+
 
 def s2twp_converter(simplified_text):
     # 創建 OpenCC 物件，指定簡體到臺灣繁體的轉換
@@ -53,6 +61,7 @@ def s2twp_converter(simplified_text):
 
 @app.route("/", methods=['GET'])
 def home():
+    pdfimage()
     model = genai.GenerativeModel('gemini-pro')
     response = model.generate_content('Please summarise this document: ...')
     return response.text
@@ -135,6 +144,27 @@ def is_punctuation(char):
     return char in string.punctuation
 
 
+def extract_text(self,file_name):
+    extract_text = '' # 用于存储提取的文本
+    doc = fitz.open(file_name)
+    # 遍历每一页pdf
+    for i in range(len(doc)):
+        img_list = doc.get_page_images(i) # 提取该页中的所有img
+        # 遍历每页中的图片，
+        for num, img in enumerate(img_list):
+            img_name = f"{self.dir_path}/{i + 1}_{num + 1}.png" # 存储的图片名
+            pix = fitz.Pixmap(doc, img[0])  # image转pixmap
+            if pix.n - pix.alpha >= 4:  # 如果差值大于等于4，需要转化后才能保存为png
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            pix.save(img_name) # 存储图片
+            pix = None  # 释放Pixmap资源
+            image = Image.open(img_name)
+            text = pytesseract.image_to_string(image,'rus') # 调用tesseract，使用俄语库
+            extract_text += text # 写入文本
+            os.remove(img_name)
+    return extract_text
+
+
 @app.route('/pdf')
 def pdf():
     doc = fitz.open('doc/change.pdf')
@@ -146,7 +176,12 @@ def pdf():
         temp = re.sub('[a-zA-Z0-9]', '', page.get_text())
         str1 = re.sub('[\n]+', '\n', temp)
         str1 = str1.strip()
-        new_text = s2twp_converter(str1.replace(",", "").replace(".", "").replace(";", "").replace("?", "").replace(":", "").replace("'","").replace("~", "").replace("《佛先菜根谭》", "").replace("（丣英对照版）", "").replace("-", "").replace(".\n", "").replace("()", ""))
+        new_text = s2twp_converter(
+            str1.replace(",", "").replace(".", "").replace(";", "").replace("?", "").replace(":", "").replace("'",
+                                                                                                              "").replace(
+                "~", "").replace("《佛先菜根谭》", "").replace("（丣英对照版）", "").replace("-", "").replace(".\n",
+                                                                                                          "").replace(
+                "()", ""))
         f.write(new_text)
     print(text)
     f.close()
@@ -163,6 +198,30 @@ def pdf():
     file1.close()
     file2.close()
 
+    return "finish"
+
+
+@app.route('/pdfimage')
+def pdfimage():
+    doc = fitz.open('doc/change.pdf')
+    path = 'doc/output.txt'
+    f = open(path, 'w' ,encoding='UTF-8')
+    # 遍历每一页pdf
+    for i in range(len(doc)):
+        img_list = doc.get_page_images(i) # 提取该页中的所有img
+        # 遍历每页中的图片，
+        for num, img in enumerate(img_list):
+            img_name = f"doc/{i + 1}_{num + 1}.png" # 存储的图片名
+            pix = fitz.Pixmap(doc, img[0])  # image转pixmap
+            if pix.n - pix.alpha >= 4:  # 如果差值大于等于4，需要转化后才能保存为png
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            pix.save(img_name) # 存储图片
+            pix = None  # 释放Pixmap资源
+            image = Image.open(img_name)
+            text = pytesseract.image_to_string(image,'chi_sim') # 调用tesseract，使用俄语库
+            f.write(text)
+            os.remove(img_name)
+    f.close()
     return "finish"
 
 

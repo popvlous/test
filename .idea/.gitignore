@@ -11,3 +11,5 @@
 /modules.xml
 /test.iml
 /vcs.xml
+*.xml
+*.iml
