@@ -2,11 +2,14 @@ import json
 import string
 from urllib import request
 
+import google
 import proto
 import requests as requests
 from flask import Flask, current_app
 from bs4 import BeautifulSoup
 import time
+
+from google.oauth2 import service_account
 from selenium.webdriver import Chrome
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -18,6 +21,15 @@ import fitz
 import re
 from opencc import OpenCC
 from pypdf import PdfReader
+
+import vertexai
+from vertexai.generative_models import GenerativeModel, Part
+from google.cloud import language_v1
+from google.cloud import aiplatform
+from google.cloud import aiplatform
+from google.cloud.aiplatform.gapic.schema import predict
+from google.protobuf import json_format
+from google.protobuf.struct_pb2 import Value
 
 # coding: utf-8
 from flask import Flask, request, abort
@@ -53,7 +65,7 @@ def s2twp_converter(simplified_text):
 
 @app.route("/", methods=['GET'])
 def home():
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.0-pro')
     response = model.generate_content('Please summarise this document: ...')
     return response.text
 
@@ -129,6 +141,73 @@ def us():
         current_app.logger.error(f'sendActionRecord 發生錯誤: {err}')
         lineNotifyMessage(LINE_TOKEN, f'溫馨提醒: https://www.taifex.com.tw/cht/3/futContractsDate 發生錯誤: {err}')
         return err
+
+
+# fred
+@app.route('/vai')
+def vai():
+    credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
+    vertexai.init(project="pyrarc-official", location="us-central1", credentials=credentials)
+    # Load the model
+    multimodal_model = GenerativeModel("gemini-1.0-pro")
+    # Query the model
+    response = multimodal_model.generate_content(
+        [
+            "佛教唯識宗的祖師是何人"
+        ]
+    )
+    print(response)
+    return response.text
+
+
+# fred
+@app.route('/vai1')
+def vai1():
+    credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
+    aiplatform.init(project="198854013711", location="us-central1", credentials=credentials)
+    response = predict_text_entity_extraction_sample(
+        project="198854013711",
+        endpoint_id="8982471238232309760",
+        location="us-central1",
+        content="佛教唯識宗的祖師是何人",
+    )
+    print(response)
+    return response.text
+
+
+def predict_text_entity_extraction_sample(
+    project: str,
+    endpoint_id: str,
+    content: str,
+    location: str = "us-central1",
+    api_endpoint: str = "us-central1-aiplatform.googleapis.com",
+):
+    # The AI Platform services require regional API endpoints.
+    client_options = {"api_endpoint": api_endpoint}
+    # Initialize client that will be used to create and send requests.
+    # This client only needs to be created once, and can be reused for multiple requests.
+    credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
+    client = aiplatform.gapic.PredictionServiceClient(client_options=client_options, credentials=credentials)
+    # The format of each instance should conform to the deployed model's prediction input schema
+    instance = predict.instance.TextExtractionPredictionInstance(
+        content=content,
+    ).to_value()
+    instances = [instance]
+    parameters_dict = {}
+    parameters = json_format.ParseDict(parameters_dict, Value())
+    endpoint = client.endpoint_path(
+        project=project, location=location, endpoint=endpoint_id
+    )
+    response = client.predict(
+        endpoint=endpoint, instances=instances, parameters=parameters
+    )
+    print("response")
+    print(" deployed_model_id:", response.deployed_model_id)
+    # See gs://google-cloud-aiplatform/schema/predict/prediction/text_extraction_1.0.0.yaml for the format of the predictions.
+    predictions = response.predictions
+    for prediction in predictions:
+        print(" prediction:", dict(prediction))
+    return prediction
 
 
 def is_punctuation(char):
