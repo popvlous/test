@@ -29,6 +29,8 @@ from PIL import Image
 
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
+from vertexai.language_models import ChatModel, InputOutputTextPair
+from vertexai import generative_models
 from google.cloud import language_v1
 from google.cloud import aiplatform
 from google.cloud import aiplatform
@@ -111,11 +113,14 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, image)
         reply_msg = "今日長輩圖"
     else:
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(msg)
+        # model = genai.GenerativeModel('gemini-pro')
+        # response = model.generate_content(msg)
+        response_text = get_chat_model_text(msg)
         try:
-            print(response.text)
-            reply_msg = response.text
+            print(response_text)
+            reply_msg = response_text
+            # print(response.text)
+            # reply_msg = response.text
         except ValueError:
             # If the response doesn't contain text, check if the prompt was blocked.
             print(response.prompt_feedback)
@@ -161,7 +166,7 @@ def vai():
     # Query the model
     response = multimodal_model.generate_content(
         [
-            "佛教唯識宗的祖師是何人"
+            "對於一分耕耘一分收穫你的看法是"
         ]
     )
     print(response)
@@ -172,15 +177,87 @@ def vai():
 @app.route('/vai1')
 def vai1():
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
-    aiplatform.init(project="198854013711", location="us-central1", credentials=credentials)
-    response = predict_text_entity_extraction_sample(
-        project="198854013711",
-        endpoint_id="8982471238232309760",
-        location="us-central1",
-        content="佛教唯識宗的祖師是何人",
+    vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
+    chat_model = ChatModel.from_pretrained("chat-bison@002")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/4626482146402369536")
+    parameters = {
+                     "candidate_count": 3,
+                     "max_output_tokens": 2048,
+                     "temperature": 0.9,
+                     "top_p": 1
+                 },
+    safety_settings = {
+        generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    }
+    chat = chat_model.start_chat(context="你是虛擬的星雲法師，主要是討論佛教的相關知識")
+
+    # chat = chat_model.start_chat(
+    #     context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
+    #     examples=[
+    #         InputOutputTextPair(
+    #             input_text="Who do you work for?",
+    #             output_text="I work for Ned.",
+    #         ),
+    #         InputOutputTextPair(
+    #             input_text="What do I like?",
+    #             output_text="Ned likes watching movies.",
+    #         ),
+    #     ],
+    #     temperature=0.9,
+    #     max_output_tokens=2048,
+    #     top_p=1,
+    # )
+
+    print(chat.send_message("在生活上應有什麼修持態度?"))
+    chat_message = chat.send_message("在生活上應有什麼修持態度?")
+    print("bot: " + chat_message.text)
+    return chat_message.text
+    # aiplatform.init(project="198854013711", location="us-central1", credentials=credentials)
+    # response = predict_text_entity_extraction_sample(
+    #     project="198854013711",
+    #     endpoint_id="8982471238232309760",
+    #     location="us-central1",
+    #     content="佛教唯識宗的祖師是何人",
+    # )
+    #
+    # print(response)
+    # return response.text
+
+def get_chat_model_text(content: str):
+    credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
+    vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
+    chat_model = ChatModel.from_pretrained("chat-bison@002")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/4626482146402369536")
+    parameters = {
+                     "candidate_count": 3,
+                     "max_output_tokens": 2048,
+                     "temperature": 0.9,
+                     "top_p": 1
+                 },
+    safety_settings = {
+        generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    }
+
+    chat = chat_model.start_chat(
+        context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
+        temperature=0.3,
+        max_output_tokens=200,
+        top_p=0.8,
+        top_k=40,
     )
-    print(response)
-    return response.text
+
+    print(chat.send_message(content))
+    chat_message = chat.send_message(content)
+    print("bot: " + chat_message.text)
+    return chat_message.text
+
+
 
 
 def predict_text_entity_extraction_sample(
