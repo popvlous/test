@@ -179,7 +179,7 @@ def vai1():
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
-    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/4626482146402369536")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     parameters = {
                      "candidate_count": 3,
                      "max_output_tokens": 2048,
@@ -192,24 +192,15 @@ def vai1():
         generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
-    chat = chat_model.start_chat(context="你是虛擬的星雲法師，主要是討論佛教的相關知識")
+    # chat = chat_model.start_chat(context="你是虛擬的星雲法師，主要是討論佛教的相關知識")
 
-    # chat = chat_model.start_chat(
-    #     context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
-    #     examples=[
-    #         InputOutputTextPair(
-    #             input_text="Who do you work for?",
-    #             output_text="I work for Ned.",
-    #         ),
-    #         InputOutputTextPair(
-    #             input_text="What do I like?",
-    #             output_text="Ned likes watching movies.",
-    #         ),
-    #     ],
-    #     temperature=0.9,
-    #     max_output_tokens=2048,
-    #     top_p=1,
-    # )
+    chat = chat_model.start_chat(
+        context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
+        temperature=0.9,
+        max_output_tokens=1024,
+        top_p=1,
+        top_k=40,
+    )
 
     print(chat.send_message("在生活上應有什麼修持態度?"))
     chat_message = chat.send_message("在生活上應有什麼修持態度?")
@@ -230,10 +221,10 @@ def get_chat_model_text(content: str):
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
-    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/4626482146402369536")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     parameters = {
-                     "candidate_count": 3,
-                     "max_output_tokens": 2048,
+                     "candidate_count": 1,
+                     "max_output_tokens": 1024,
                      "temperature": 0.9,
                      "top_p": 1
                  },
@@ -246,9 +237,9 @@ def get_chat_model_text(content: str):
 
     chat = chat_model.start_chat(
         context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
-        temperature=0.3,
-        max_output_tokens=200,
-        top_p=0.8,
+        temperature=0.9,
+        max_output_tokens=1024,
+        top_p=1,
         top_k=40,
     )
 
