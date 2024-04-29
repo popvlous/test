@@ -193,17 +193,26 @@ def vai1():
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
     # chat = chat_model.start_chat(context="你是虛擬的星雲法師，主要是討論佛教的相關知識")
+    parameters = {
+                     "candidate_count": 3,
+                     "max_output_tokens": 2048,
+                     "temperature": 0.9,
+                     "top_p": 1
+                 },
 
     chat = chat_model.start_chat(
-        context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
+        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，以及佛光菜根譚回答需要依照星雲法師人間佛教的思考方式回答，如果可以就用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
         top_k=40,
     )
 
+
+
     print(chat.send_message("在生活上應有什麼修持態度?"))
-    chat_message = chat.send_message("在生活上應有什麼修持態度?")
+    chat_message = chat.send_message("""在生活上應有什麼修持態度""", candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1)
+    # chat_message = chat.send_message("在生活上應有什麼修持態度?")
     print("bot: " + chat_message.text)
     return chat_message.text
     # aiplatform.init(project="198854013711", location="us-central1", credentials=credentials)
@@ -222,29 +231,15 @@ def get_chat_model_text(content: str):
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
     chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
-    parameters = {
-                     "candidate_count": 1,
-                     "max_output_tokens": 1024,
-                     "temperature": 0.9,
-                     "top_p": 1
-                 },
-    safety_settings = {
-        generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    }
-
     chat = chat_model.start_chat(
-        context="你是虛擬的星雲法師，主要是討論佛教的相關知識",
+        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，以及佛光菜根譚回答需要依照星雲法師人間佛教的思考方式回答，如果可以就用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
         top_k=40,
     )
-
-    print(chat.send_message(content))
-    chat_message = chat.send_message(content)
+    print(chat.send_message(content, candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1))
+    chat_message = chat.send_message(content, candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1)
     print("bot: " + chat_message.text)
     return chat_message.text
 
