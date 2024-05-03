@@ -116,6 +116,7 @@ def handle_message(event):
     user_id = event.source.user_id
     reply_msg = ''
     line_ids = get_line_id_list()
+    current_app.logger.error(f' line_ids  發生錯誤: {line_ids}')
     if user_id not in line_ids:
         message = TextSendMessage(text='目前未開通服務，請拷貝本文字或是截圖傳給開發商開通服務\n\n' + user_id)
         line_bot_api.reply_message(event.reply_token, message)
