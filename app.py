@@ -48,14 +48,14 @@ from random import choice
 
 
 # line token 星雲說
-# channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
-# channel_secret = '63cab70334966c3908e47bf86edcfbe7'
-# ngrok_url = 'https://oasis.pyrarc.com'
+channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
+channel_secret = '63cab70334966c3908e47bf86edcfbe7'
+ngrok_url = 'https://oasis.pyrarc.com'
 
 # line token 星雲大師說
-channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
-channel_secret = 'e619c7032c0b819501f24680c34e5761'
-ngrok_url = 'https://3219-211-72-15-211.ngrok-free.app'
+# channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
+# channel_secret = 'e619c7032c0b819501f24680c34e5761'
+# ngrok_url = 'https://3219-211-72-15-211.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
@@ -70,7 +70,7 @@ LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
 
 # line login註冊
-LINE_LOGIN_REDIRECT_DOMAIN = 'https://3219-211-72-15-211.ngrok-free.app'
+LINE_LOGIN_REDIRECT_DOMAIN = 'https://oasis.pyrarc.com'
 LINE_LOGIN_CLIENT_ID = '2004800649'
 LINE_LOGIN_CLIENT_SECRET = 'f5f94fff941911f161fc540ab0c7c309'
 
