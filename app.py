@@ -1,11 +1,12 @@
 import json
 import string
 from urllib import request
+import uuid
 
 import google
 import proto
 import requests as requests
-from flask import Flask, current_app
+from flask import Flask, request, current_app, Response, render_template, redirect, jsonify, url_for
 from bs4 import BeautifulSoup
 import time
 
@@ -45,21 +46,33 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 from random import choice
 
-# line token
-channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
-channel_secret = '63cab70334966c3908e47bf86edcfbe7'
+
+# line token 星雲說
+# channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
+# channel_secret = '63cab70334966c3908e47bf86edcfbe7'
+# ngrok_url = 'https://oasis.pyrarc.com'
+
+# line token 星雲大師說
+channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
+channel_secret = 'e619c7032c0b819501f24680c34e5761'
+ngrok_url = 'https://3219-211-72-15-211.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
-app = Flask(__name__, static_folder='image/static', static_url_path='/static')
+app = Flask(__name__, static_folder='image/static', template_folder='templates', static_url_path='/static')
 
 genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
-ngrok_url = 'https://f81a-211-72-15-212.ngrok-free.app/'
+
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
+
+# line login註冊
+LINE_LOGIN_REDIRECT_DOMAIN = 'https://3219-211-72-15-211.ngrok-free.app'
+LINE_LOGIN_CLIENT_ID = '2004800649'
+LINE_LOGIN_CLIENT_SECRET = 'f5f94fff941911f161fc540ab0c7c309'
 
 
 
@@ -100,33 +113,119 @@ def callback():
 def handle_message(event):
     # echo
     msg = event.message.text
+    user_id = event.source.user_id
     reply_msg = ''
-    if msg.startswith('/美股'):
-        reply_msg = us()
-    elif msg.startswith('/長輩圖'):
-        files_lists = os.listdir('image/static/')
-        if files_lists:
-            files_lists_count = len(files_lists)
-        pic_name = choice(files_lists)
-        image = ImageSendMessage(original_content_url=ngrok_url + "/static/" + pic_name,
-                                 preview_image_url=ngrok_url + "/static/" + pic_name)
-        line_bot_api.reply_message(event.reply_token, image)
-        reply_msg = "今日長輩圖"
+    line_ids = get_line_id_list()
+    if user_id not in line_ids:
+        message = TextSendMessage(text='目前未開通服務，請拷貝本文字或是截圖傳給開發商開通服務\n\n' + user_id)
+        line_bot_api.reply_message(event.reply_token, message)
+        lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + user_id + "\n用戶傳送文字： \n" + msg)
+    elif msg.startswith('/cmdadd'):
+        account_msg = msg.split(' ')
+        if account_msg[1]:
+            save_account_to_file(account_msg[1])
+            message = TextSendMessage(text='已添加ID: '+account_msg[1])
+            line_bot_api.reply_message(event.reply_token, message)
+        else:
+            message = TextSendMessage(text='該命令缺乏ＩＤ值，無法解析')
+            line_bot_api.reply_message(event.reply_token, message)
+    elif msg.startswith('/cmddel'):
+        account_msg = msg.split(' ')
+        if account_msg[1] == 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe':
+            message = TextSendMessage(text='管理帳號 不得刪除')
+            line_bot_api.reply_message(event.reply_token, message)
+        elif account_msg[1]:
+            delete_account_to_file(account_msg[1])
+            message = TextSendMessage(text='已移除ID: '+account_msg[1])
+            line_bot_api.reply_message(event.reply_token, message)
+        else:
+            message = TextSendMessage(text='該ＩＤ以存在')
+            line_bot_api.reply_message(event.reply_token, message)
     else:
-        # model = genai.GenerativeModel('gemini-pro')
-        # response = model.generate_content(msg)
-        response_text = get_chat_model_text(msg)
-        try:
-            print(response_text)
-            reply_msg = response_text
-            # print(response.text)
-            # reply_msg = response.text
-        except ValueError:
-            # If the response doesn't contain text, check if the prompt was blocked.
-            print(response.prompt_feedback)
-            reply_msg = "我想想，可否更具體的描述呢？"
-    message = TextSendMessage(text=reply_msg)
-    line_bot_api.reply_message(event.reply_token, message)
+        if msg.startswith('/美股'):
+            reply_msg = us()
+        elif msg.startswith('/長輩圖'):
+            files_lists = os.listdir('image/static/')
+            if files_lists:
+                files_lists_count = len(files_lists)
+            pic_name = choice(files_lists)
+            image = ImageSendMessage(original_content_url=ngrok_url + "/static/" + pic_name,
+                                     preview_image_url=ngrok_url + "/static/" + pic_name)
+            line_bot_api.reply_message(event.reply_token, image)
+            reply_msg = "今日長輩圖"
+        else:
+            # model = genai.GenerativeModel('gemini-pro')
+            # response = model.generate_content(msg)
+            response_text = get_chat_model_text(msg)
+            try:
+                print(response_text)
+                reply_msg = response_text
+                # print(response.text)
+                # reply_msg = response.text
+            except ValueError:
+                # If the response doesn't contain text, check if the prompt was blocked.
+                print(response.prompt_feedback)
+                reply_msg = "我想想，可否更具體的描述呢？"
+        message = TextSendMessage(text=reply_msg)
+        line_bot_api.reply_message(event.reply_token, message)
+
+# 保存帳號到文件
+def save_account_to_file(line_user_id: str):
+    path = 'doc/line-user-id.txt'
+    if os.path.isfile(path):
+        f = open(path)
+        text = f.read()
+        print(text)
+        f.close
+        line_id_list = text.split(',')
+        if line_user_id not in line_id_list:
+            f = open(path, 'w')
+            new_text = text+','+line_user_id
+            f.write(new_text)
+            f.close
+        else:
+            f = open(path, 'w')
+            new_text = text
+            f.write(new_text)
+            f.close
+    else:
+        f = open(path, 'w')
+        new_text = 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe'
+        f.write(new_text)
+        f.close
+
+# 刪除文件中的帳號
+def delete_account_to_file(line_user_id: str):
+    path = 'doc/line-user-id.txt'
+    if os.path.isfile(path):
+        f = open(path)
+        text = f.read()
+        print(text)
+        f.close
+        line_id_list = text.split(',')
+        new_text = ''
+        if line_user_id in line_id_list:
+            for lid in line_id_list:
+                if lid == 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe':
+                    new_text = lid
+                elif lid != line_user_id and lid != '':
+                    new_text = new_text + ',' + lid
+            f = open(path, 'w')
+            f.write(new_text)
+            f.close
+
+
+
+def get_line_id_list():
+    path = 'doc/line-user-id.txt'
+    if os.path.isfile(path):
+        f = open(path)
+        text = f.read()
+        line_id_list = text.split(',')
+        return line_id_list
+    else:
+        line_id_list = ['Ucc8d3a2030d9ad30c5c9a76bbdb515fe']
+        return line_id_list
 
 
 # fred
@@ -154,6 +253,77 @@ def us():
         current_app.logger.error(f'sendActionRecord 發生錯誤: {err}')
         lineNotifyMessage(LINE_TOKEN, f'溫馨提醒: https://www.taifex.com.tw/cht/3/futContractsDate 發生錯誤: {err}')
         return err
+    
+    
+# line login
+@app.route(u'/linelogin/link', methods=['GET'])
+def line_login_link():
+    """
+    linelogin
+    """
+    redirect_uri = f'{LINE_LOGIN_REDIRECT_DOMAIN}/linelogin/getcode'
+    client_id = LINE_LOGIN_CLIENT_ID
+    uid = uuid.uuid4()
+    line_state = ''.join(str(uid).split('-'))  # 隨機文字，之後給回調用來查使用者用的，避免帳號直接顯示在網址
+    url = f'https://access.line.me/oauth2/v2.1/authorize?response_type=code&scope=profile+openid+email&client_id={client_id}&redirect_uri={redirect_uri}&state={line_state}'
+    current_app.logger.info(f' linelogin作業成功，網址:{url}')
+    return redirect(url)
+
+@app.route(u'/linelogin/getcode', methods=['GET', 'POST'])
+def linelogin_getcode():
+    """
+    提供綁定 line login 回調
+    """
+    code = request.args.get('code')
+    redirect_uri = f'{LINE_LOGIN_REDIRECT_DOMAIN}/linelogin/getcode'
+    state = request.args.get('state')
+    client_id = LINE_LOGIN_CLIENT_ID
+    client_secret = LINE_LOGIN_CLIENT_SECRET
+    res = get_line_login_token(code, client_id, client_secret, redirect_uri)
+    access_token = res['access_token']
+    id_token = res['id_token']
+    if access_token:
+        pro = get_line_user_id(res['access_token'])
+        lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + pro['userId'] +"\n用戶名： \n"+ pro['displayName'])
+        # return "請提供該ＩＤ給管理員 進行星雲說開通作業 \nID: \n" + pro['userId']
+        return render_template('success.html', uid=pro['userId'])
+    else:
+        current_app.logger.info(f'{state} 儲存失敗，未獲取到user_id')
+        return render_template('/api/fail.html')
+
+def get_line_login_token(code, client_id, client_secret, redirect_uri):
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': redirect_uri,
+        'client_id': client_id,
+        'client_secret': client_secret
+    }
+    result_info = ""
+    try:
+        r = requests.post("https://api.line.me/oauth2/v2.1/token", headers=headers, data=data)
+        res = json.loads(r.content.decode("utf-8").replace("'", '"'))
+        current_app.logger.error(f'{code} post login auth  成功')
+        return res
+    except Exception as err:
+        current_app.logger.error(f'{code} post login auth  發生錯誤: {err}')
+        return None
+
+
+def get_line_user_id(access_token):
+    headers = {'Authorization': 'Bearer ' + access_token}
+    result_info = ""
+    try:
+        r = requests.get("https://api.line.me/v2/profile", headers=headers)
+        res = json.loads(r.content.decode("utf-8").replace("'", '"'))
+        current_app.logger.error(f' line_user_id  成功')
+        return res
+    except Exception as err:
+        current_app.logger.error(f' line_user_id  發生錯誤: {err}')
+        return None
+    
+
 
 
 # fred
@@ -232,7 +402,7 @@ def get_chat_model_text(content: str):
     chat_model = ChatModel.from_pretrained("chat-bison@002")
     chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     chat = chat_model.start_chat(
-        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，以及佛光菜根譚回答需要依照星雲法師人間佛教的思考方式回答，如果可以就用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
+        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：1.優先用星雲法師本人的故事來回答2.優先使用星雲法師親身經歷來回答3.依照星雲法師人間佛教的思考方式回答4.用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
