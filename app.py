@@ -426,12 +426,10 @@ def get_chat_model_text(content: str):
 4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
         temperature=0.9,
         max_output_tokens=1024,
-        top_p=1,
-        top_k=1,
+        top_p=1
     )
     # print(chat.send_message(content, candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1))
-    chat_message = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1,
-                                     top_k=1)
+    chat_message = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
     print(chat_message)
     print("bot: " + chat_message.text)
     return chat_message.text.lstrip()
