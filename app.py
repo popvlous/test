@@ -30,7 +30,7 @@ from PIL import Image
 
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
-from vertexai.language_models import ChatModel, InputOutputTextPair
+from vertexai.language_models import ChatModel, InputOutputTextPair, ChatMessage
 from vertexai import generative_models
 from google.cloud import language_v1
 from google.cloud import aiplatform
@@ -46,7 +46,6 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 from random import choice
 
-
 # line token 星雲說
 channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
 channel_secret = '63cab70334966c3908e47bf86edcfbe7'
@@ -55,7 +54,7 @@ ngrok_url = 'https://oasis.pyrarc.com'
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://3219-211-72-15-211.ngrok-free.app'
+# ngrok_url = 'https://44a4-211-72-15-212.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
@@ -65,15 +64,12 @@ genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
 
-
-
 pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
 
 # line login註冊
 LINE_LOGIN_REDIRECT_DOMAIN = 'https://oasis.pyrarc.com'
 LINE_LOGIN_CLIENT_ID = '2004800649'
 LINE_LOGIN_CLIENT_SECRET = 'f5f94fff941911f161fc540ab0c7c309'
-
 
 
 def s2twp_converter(simplified_text):
@@ -125,7 +121,7 @@ def handle_message(event):
         account_msg = msg.split(' ')
         if account_msg[1]:
             save_account_to_file(account_msg[1])
-            message = TextSendMessage(text='已添加ID: '+account_msg[1])
+            message = TextSendMessage(text='已添加ID: ' + account_msg[1])
             line_bot_api.reply_message(event.reply_token, message)
         else:
             message = TextSendMessage(text='該命令缺乏ＩＤ值，無法解析')
@@ -137,7 +133,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, message)
         elif account_msg[1]:
             delete_account_to_file(account_msg[1])
-            message = TextSendMessage(text='已移除ID: '+account_msg[1])
+            message = TextSendMessage(text='已移除ID: ' + account_msg[1])
             line_bot_api.reply_message(event.reply_token, message)
         else:
             message = TextSendMessage(text='該ＩＤ以存在')
@@ -170,6 +166,7 @@ def handle_message(event):
         message = TextSendMessage(text=reply_msg)
         line_bot_api.reply_message(event.reply_token, message)
 
+
 # 保存帳號到文件
 def save_account_to_file(line_user_id: str):
     path = 'doc/line-user-id.txt'
@@ -181,7 +178,7 @@ def save_account_to_file(line_user_id: str):
         line_id_list = text.split(',')
         if line_user_id not in line_id_list:
             f = open(path, 'w')
-            new_text = text+','+line_user_id
+            new_text = text + ',' + line_user_id
             f.write(new_text)
             f.close
         else:
@@ -194,6 +191,7 @@ def save_account_to_file(line_user_id: str):
         new_text = 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe'
         f.write(new_text)
         f.close
+
 
 # 刪除文件中的帳號
 def delete_account_to_file(line_user_id: str):
@@ -214,7 +212,6 @@ def delete_account_to_file(line_user_id: str):
             f = open(path, 'w')
             f.write(new_text)
             f.close
-
 
 
 def get_line_id_list():
@@ -254,8 +251,8 @@ def us():
         current_app.logger.error(f'sendActionRecord 發生錯誤: {err}')
         lineNotifyMessage(LINE_TOKEN, f'溫馨提醒: https://www.taifex.com.tw/cht/3/futContractsDate 發生錯誤: {err}')
         return err
-    
-    
+
+
 # line login
 @app.route(u'/linelogin/link', methods=['GET'])
 def line_login_link():
@@ -269,6 +266,7 @@ def line_login_link():
     url = f'https://access.line.me/oauth2/v2.1/authorize?response_type=code&scope=profile+openid+email&client_id={client_id}&redirect_uri={redirect_uri}&state={line_state}'
     current_app.logger.info(f' linelogin作業成功，網址:{url}')
     return redirect(url)
+
 
 @app.route(u'/linelogin/getcode', methods=['GET', 'POST'])
 def linelogin_getcode():
@@ -285,12 +283,13 @@ def linelogin_getcode():
     id_token = res['id_token']
     if access_token:
         pro = get_line_user_id(res['access_token'])
-        lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + pro['userId'] +"\n用戶名： \n"+ pro['displayName'])
+        lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + pro['userId'] + "\n用戶名： \n" + pro['displayName'])
         # return "請提供該ＩＤ給管理員 進行星雲說開通作業 \nID: \n" + pro['userId']
         return render_template('success.html', uid=pro['userId'])
     else:
         current_app.logger.info(f'{state} 儲存失敗，未獲取到user_id')
         return render_template('/api/fail.html')
+
 
 def get_line_login_token(code, client_id, client_secret, redirect_uri):
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -323,8 +322,6 @@ def get_line_user_id(access_token):
     except Exception as err:
         current_app.logger.error(f' line_user_id  發生錯誤: {err}')
         return None
-    
-
 
 
 # fred
@@ -370,19 +367,23 @@ def vai1():
                      "temperature": 0.9,
                      "top_p": 1
                  },
-
+    messages_history = [ChatMessage(author="User", content="你是誰"), ChatMessage(author="AI", content="我是星雲大師")]
     chat = chat_model.start_chat(
         context="你是虛擬的星雲法師主要是討論人間佛教思想的相關知識回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：1. 優先用星雲法師本人的故事來回答2. 優先使用星雲法師親身經歷來回答3. 依照星雲法師人間佛教的思考方式回答4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
         top_k=1,
+        examples=[
+            InputOutputTextPair(
+                input_text="""你是誰""",
+                output_text="""我是星雲大師"""
+            )
+        ],
+        message_history=messages_history
     )
-
-
-
     # print(chat.send_message("在生活上應有什麼修持態度?"))
-    chat_message = chat.send_message("""在生活上應有什麼修持態度""", candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
+    chat_message = chat.send_message("在生活上應有什麼修持態度", candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
     # chat_message = chat.send_message("在生活上應有什麼修持態度?")
     print(chat_message)
     print("bot: " + chat_message.text)
@@ -398,39 +399,39 @@ def vai1():
     # print(response)
     # return response.text
 
+
 def get_chat_model_text(content: str):
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
-    vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
-    chat_model = ChatModel.from_pretrained("chat-bison@002")
-    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     safety_settings = {
         generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
+    vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
+    chat_model = ChatModel.from_pretrained("chat-bison@002")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     chat = chat_model.start_chat(
-        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：1.優先用星雲法師本人的故事來回答2.優先使用星雲法師親身經歷來回答3.依照星雲法師人間佛教的思考方式回答4.用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
+        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題，跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」，謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑，回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：1. 優先用星雲法師本人的故事來回答2. 優先使用星雲法師親身經歷來回答3. 依照星雲法師人間佛教的思考方式回答4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
         top_k=1,
     )
     # print(chat.send_message(content, candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1))
-    chat_message = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
+    chat_message = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1,
+                                     top_k=1)
     print(chat_message)
     print("bot: " + chat_message.text)
-    return chat_message.text
-
-
+    return chat_message.text.lstrip()
 
 
 def predict_text_entity_extraction_sample(
-    project: str,
-    endpoint_id: str,
-    content: str,
-    location: str = "us-central1",
-    api_endpoint: str = "us-central1-aiplatform.googleapis.com",
+        project: str,
+        endpoint_id: str,
+        content: str,
+        location: str = "us-central1",
+        api_endpoint: str = "us-central1-aiplatform.googleapis.com",
 ):
     # The AI Platform services require regional API endpoints.
     client_options = {"api_endpoint": api_endpoint}
@@ -464,23 +465,23 @@ def is_punctuation(char):
     return char in string.punctuation
 
 
-def extract_text(self,file_name):
-    extract_text = '' # 用于存储提取的文本
+def extract_text(self, file_name):
+    extract_text = ''  # 用于存储提取的文本
     doc = fitz.open(file_name)
     # 遍历每一页pdf
     for i in range(len(doc)):
-        img_list = doc.get_page_images(i) # 提取该页中的所有img
+        img_list = doc.get_page_images(i)  # 提取该页中的所有img
         # 遍历每页中的图片，
         for num, img in enumerate(img_list):
-            img_name = f"{self.dir_path}/{i + 1}_{num + 1}.png" # 存储的图片名
+            img_name = f"{self.dir_path}/{i + 1}_{num + 1}.png"  # 存储的图片名
             pix = fitz.Pixmap(doc, img[0])  # image转pixmap
             if pix.n - pix.alpha >= 4:  # 如果差值大于等于4，需要转化后才能保存为png
                 pix = fitz.Pixmap(fitz.csRGB, pix)
-            pix.save(img_name) # 存储图片
+            pix.save(img_name)  # 存储图片
             pix = None  # 释放Pixmap资源
             image = Image.open(img_name)
-            text = pytesseract.image_to_string(image,'rus') # 调用tesseract，使用俄语库
-            extract_text += text # 写入文本
+            text = pytesseract.image_to_string(image, 'rus')  # 调用tesseract，使用俄语库
+            extract_text += text  # 写入文本
             os.remove(img_name)
     return extract_text
 
@@ -496,7 +497,11 @@ def pdf():
         temp = re.sub('[a-zA-Z0-9]', '', page.get_text())
         str1 = re.sub('[\n]+', '\n', temp)
         str1 = str1.strip()
-        new_text = s2twp_converter(str1.replace(",", "").replace(".", "").replace(";", "").replace("?", "").replace(":", "").replace("'","").replace("~", "").replace("《佛先菜根谭》", "").replace("（丣英对照版）", "").replace("-", "").replace(".\n", "").replace("()", ""))
+        new_text = s2twp_converter(
+            str1.replace(",", "").replace(".", "").replace(";", "").replace("?", "").replace(":", "").replace("'",
+                                                                                                              "").replace(
+                "~", "").replace("《佛先菜根谭》", "").replace("（丣英对照版）", "").replace("-", "").replace(".\n", "").replace("()",
+                                                                                                                   ""))
         f.write(new_text)
     print(text)
     f.close()
@@ -520,20 +525,20 @@ def pdf():
 def pdfimage():
     doc = fitz.open('doc/change.pdf')
     path = 'doc/output.txt'
-    f = open(path, 'w' ,encoding='UTF-8')
+    f = open(path, 'w', encoding='UTF-8')
     # 遍历每一页pdf
     for i in range(len(doc)):
-        img_list = doc.get_page_images(i) # 提取该页中的所有img
+        img_list = doc.get_page_images(i)  # 提取该页中的所有img
         # 遍历每页中的图片，
         for num, img in enumerate(img_list):
-            img_name = f"doc/{i + 1}_{num + 1}.png" # 存储的图片名
+            img_name = f"doc/{i + 1}_{num + 1}.png"  # 存储的图片名
             pix = fitz.Pixmap(doc, img[0])  # image转pixmap
             if pix.n - pix.alpha >= 4:  # 如果差值大于等于4，需要转化后才能保存为png
                 pix = fitz.Pixmap(fitz.csRGB, pix)
-            pix.save(img_name) # 存储图片
+            pix.save(img_name)  # 存储图片
             pix = None  # 释放Pixmap资源
             image = Image.open(img_name)
-            text = pytesseract.image_to_string(image,'chi_sim') # 调用tesseract，使用俄语库
+            text = pytesseract.image_to_string(image, 'chi_sim')  # 调用tesseract，使用俄语库
             f.write(text)
             os.remove(img_name)
     f.close()
