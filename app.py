@@ -376,16 +376,16 @@ def vai1():
         top_k=1,
         examples=[
             InputOutputTextPair(
-                input_text="""你是誰""",
-                output_text="""我是星雲大師"""
+                input_text="請問圓山大飯店是誰蓋的",
+                output_text="""我是星雲法師的虛擬助理,我只能回答關於星雲法師的相關知識"""
             )
-        ],
-        message_history=messages_history
+        ]
     )
-    # print(chat.send_message("在生活上應有什麼修持態度?"))
-    chat_message = chat.send_message("在生活上應有什麼修持態度", candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
-    # chat_message = chat.send_message("在生活上應有什麼修持態度?")
-    print(chat_message)
+    #chat_message = chat.send_message("請問圓山大飯店是誰蓋的", candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
+    responses = chat.send_message_streaming(
+        message="請問圓山大飯店是誰蓋的", candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1, top_k=1)
+    for response in responses:
+        print(response)
     print("bot: " + chat_message.text)
     return chat_message.text
     # aiplatform.init(project="198854013711", location="us-central1", credentials=credentials)
@@ -412,7 +412,17 @@ def get_chat_model_text(content: str):
     chat_model = ChatModel.from_pretrained("chat-bison@002")
     chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
     chat = chat_model.start_chat(
-        context="你是虛擬的星雲法師，主要是討論人間佛教思想的相關知識，一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題，跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」，謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑，回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：1. 優先用星雲法師本人的故事來回答2. 優先使用星雲法師親身經歷來回答3. 依照星雲法師人間佛教的思考方式回答4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可",
+        context="""你是虛擬的星雲法師
+主要是討論人間佛教思想的相關知識
+一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
+跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
+謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
+
+回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
+1. 優先用星雲法師本人的故事來回答
+2. 優先使用星雲法師親身經歷來回答
+3. 依照星雲法師人間佛教的思考方式回答
+4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
         temperature=0.9,
         max_output_tokens=1024,
         top_p=1,
