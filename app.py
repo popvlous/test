@@ -45,16 +45,19 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 from random import choice
+from firebase import firebase
 
 # line token 星雲說
 channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0kyH4LcfWf4IVr0QuFz9Txe60RsEKPsmDXbkDKygFLrN5riFmK83f/YhpO9opziz/PWs5AE1kFHxgt0Yku3HY34I8JvIFIQdB04t89/1O/w1cDnyilFU='
 channel_secret = '63cab70334966c3908e47bf86edcfbe7'
 ngrok_url = 'https://oasis.pyrarc.com'
 
+firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
+
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://44a4-211-72-15-212.ngrok-free.app'
+# ngrok_url = 'https://87bc-211-72-15-211.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
@@ -113,6 +116,11 @@ def handle_message(event):
     reply_msg = ''
     line_ids = get_line_id_list()
     current_app.logger.error(f' line_ids  發生錯誤: {line_ids}')
+    # 用firebase儲存對話資料
+    fdb = firebase.FirebaseApplication(firebase_url, None)
+    user_chat_path = f'chat/{user_id}'
+    chat_state_path = f'state/{user_id}'
+    chat_firebase = fdb.get(user_chat_path, None)
     if user_id not in line_ids:
         message = TextSendMessage(text='目前未開通服務，請拷貝本文字或是截圖後、請傳給開發商開通服務\n\n' + user_id)
         line_bot_api.reply_message(event.reply_token, message)
@@ -153,10 +161,22 @@ def handle_message(event):
         else:
             # model = genai.GenerativeModel('gemini-pro')
             # response = model.generate_content(msg)
-            response_text = get_chat_model_text(msg)
+            messages_history = []
+            if chat_firebase is None:
+                messages = []
+                messages_history = []
+            else:
+                messages = chat_firebase
+                for char_info in chat_firebase:
+                    messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
+            response_text = get_chat_model_text(msg, messages_history)
             try:
                 print(response_text)
                 reply_msg = response_text
+                messages.append({"author": "user", "content": msg})
+                messages.append({"author": "assistant", "content": reply_msg})
+                # 更新firebase中的對話紀錄
+                fdb.put_async(user_chat_path, None, messages)
                 # print(response.text)
                 # reply_msg = response.text
             except ValueError:
@@ -432,7 +452,7 @@ def vai2():
     3. 依照星雲法師人間佛教的思考方式回答
     4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
     )
-    response = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
+    responses = chat.send_message_streaming(content, max_output_tokens=1024, temperature=0.9, top_p=1)
 
     # safety_settings = {
     #     generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
@@ -459,11 +479,12 @@ def vai2():
     # )
     # # print(chat.send_message(content, candidate_count=3, max_output_tokens=2048, temperature=0.9, top_p=1))
     # chat_message = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
-    print(response)
-    print("bot: " + response.text)
-    return response.text.lstrip()
+    for response in responses:
+        print(response)
+    print("bot: " + responses.text)
+    return responses.text.lstrip()
 
-def get_chat_model_text(content: str):
+def get_chat_model_text(content: str, messages):
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
@@ -480,20 +501,36 @@ def get_chat_model_text(content: str):
         generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
-    chat = chat_model.start_chat(
-        context="""你是虛擬的星雲法師
-    主要是討論人間佛教思想的相關知識
-    一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
-    跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
-    謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
-    不要回答跟現實不符合的，不要亂編非事實的事情
+    if messages:
+        chat = chat_model.start_chat(
+            context="""你是虛擬的星雲法師
+        主要是討論人間佛教思想的相關知識
+        一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
+        跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
+        謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
+        不要回答跟現實不符合的，不要亂編非事實的事情
 
-    回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
-    1. 優先用星雲法師本人的故事來回答
-    2. 優先使用星雲法師親身經歷來回答
-    3. 依照星雲法師人間佛教的思考方式回答
-    4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
-    )
+        回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
+        1. 優先用星雲法師本人的故事來回答
+        2. 優先使用星雲法師親身經歷來回答
+        3. 依照星雲法師人間佛教的思考方式回答
+        4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
+            message_history=messages
+        )
+    else:
+        chat = chat_model.start_chat(
+            context="""你是虛擬的星雲法師
+        主要是討論人間佛教思想的相關知識
+        一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
+        跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
+        謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
+        不要回答跟現實不符合的，不要亂編非事實的事情
+
+        回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
+        1. 優先用星雲法師本人的故事來回答
+        2. 優先使用星雲法師親身經歷來回答
+        3. 依照星雲法師人間佛教的思考方式回答
+        4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""")
     response = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
 
     # safety_settings = {
