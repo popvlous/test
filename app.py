@@ -512,14 +512,16 @@ def get_chat_model_text(content: str, messages):
         chat = chat_model.start_chat(
             context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
 不回答非佛教問題
-非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
+非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"
+沒有找到相關的答案，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
             message_history=messages_history
         )
     else:
         chat = chat_model.start_chat(
             context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
 不回答非佛教問題
-非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""")
+非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"
+沒有找到相關的答案，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""")
     response = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
 
     # safety_settings = {
