@@ -57,7 +57,7 @@ firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://87bc-211-72-15-211.ngrok-free.app'
+# ngrok_url = 'https://49a8-211-72-15-212.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
@@ -161,15 +161,11 @@ def handle_message(event):
         else:
             # model = genai.GenerativeModel('gemini-pro')
             # response = model.generate_content(msg)
-            messages_history = []
             if chat_firebase is None:
                 messages = []
-                messages_history = []
             else:
                 messages = chat_firebase
-                for char_info in chat_firebase:
-                    messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
-            response_text = get_chat_model_text(msg, messages_history)
+            response_text = get_chat_model_text(msg, messages)
             try:
                 print(response_text)
                 reply_msg = response_text
@@ -438,11 +434,26 @@ def vai2():
         generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
-    chat = chat_model.start_chat(
-        context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
-不回答非佛教問題
-非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
-    )
+
+    # 用firebase儲存對話資料
+    fdb = firebase.FirebaseApplication(firebase_url, None)
+    user_chat_path = f'chat/{user_id}'
+    chat_state_path = f'state/{user_id}'
+    chat_firebase = fdb.get(user_chat_path, None)
+
+    if messages:
+        chat = chat_model.start_chat(
+            context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+    不回答非佛教問題
+    非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
+            message_history=messages
+        )
+    else:
+        chat = chat_model.start_chat(
+            context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+    不回答非佛教問題
+    非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""")
+    response = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
     responses = chat.send_message_streaming(content, max_output_tokens=1024, temperature=0.9, top_p=1)
 
     # safety_settings = {
@@ -492,12 +503,17 @@ def get_chat_model_text(content: str, messages):
         generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
-    if messages:
+    # 歷史對話紀錄
+    messages_history = []
+    for char_info in messages:
+        messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
+
+    if messages_history:
         chat = chat_model.start_chat(
             context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
 不回答非佛教問題
 非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
-            message_history=messages
+            message_history=messages_history
         )
     else:
         chat = chat_model.start_chat(
