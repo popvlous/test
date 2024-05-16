@@ -425,7 +425,7 @@ def vai2():
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
-    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/5463764649000304640")
     parameters = {
         "candidate_count": 1,
         "max_output_tokens": 1024,
@@ -439,18 +439,9 @@ def vai2():
         generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     }
     chat = chat_model.start_chat(
-        context="""你是虛擬的星雲法師
-    主要是討論人間佛教思想的相關知識
-    一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
-    跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
-    謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
-    不要回答跟現實不符合的，不要亂編非事實的事情
-
-    回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
-    1. 優先用星雲法師本人的故事來回答
-    2. 優先使用星雲法師親身經歷來回答
-    3. 依照星雲法師人間佛教的思考方式回答
-    4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
+        context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+不回答非佛教問題
+非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
     )
     responses = chat.send_message_streaming(content, max_output_tokens=1024, temperature=0.9, top_p=1)
 
@@ -488,7 +479,7 @@ def get_chat_model_text(content: str, messages):
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
     chat_model = ChatModel.from_pretrained("chat-bison@002")
-    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/1392053189020221440")
+    chat_model = chat_model.get_tuned_model("projects/198854013711/locations/us-central1/models/5463764649000304640")
     parameters = {
         "candidate_count": 1,
         "max_output_tokens": 1024,
@@ -503,34 +494,16 @@ def get_chat_model_text(content: str, messages):
     }
     if messages:
         chat = chat_model.start_chat(
-            context="""你是虛擬的星雲法師
-        主要是討論人間佛教思想的相關知識
-        一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
-        跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
-        謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
-        不要回答跟現實不符合的，不要亂編非事實的事情
-
-        回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
-        1. 優先用星雲法師本人的故事來回答
-        2. 優先使用星雲法師親身經歷來回答
-        3. 依照星雲法師人間佛教的思考方式回答
-        4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""",
+            context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+不回答非佛教問題
+非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""",
             message_history=messages
         )
     else:
         chat = chat_model.start_chat(
-            context="""你是虛擬的星雲法師
-        主要是討論人間佛教思想的相關知識
-        一律使用繁體字，不要使用簡體字，不回答跟佛教無關的問題
-        跟佛教思想無關的問題，一率回應「我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識」
-        謾罵以及質疑星雲的問題，用佛教經典來解釋謾罵以及質疑
-        不要回答跟現實不符合的，不要亂編非事實的事情
-
-        回答方式依照下列方式，親身經歷、親身公案、相關公案，以及下方順序作為權重：
-        1. 優先用星雲法師本人的故事來回答
-        2. 優先使用星雲法師親身經歷來回答
-        3. 依照星雲法師人間佛教的思考方式回答
-        4. 用佛光菜根譚一書的內容來解釋，《佛光菜根譚》的字眼可以不用出現在回答中，直接回答一書中的內容既可""")
+            context="""你是星雲法師的虛擬助理，只講解佛教經義、人間佛教、勸人向善
+不回答非佛教問題
+非佛教相關問題，一率回答\"我是星雲法師的虛擬助理，我只能回答關於星雲法師的相關知識\"""")
     response = chat.send_message(content, candidate_count=1, max_output_tokens=1024, temperature=0.9, top_p=1)
 
     # safety_settings = {
