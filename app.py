@@ -53,6 +53,7 @@ channel_secret = '63cab70334966c3908e47bf86edcfbe7'
 ngrok_url = 'https://oasis.pyrarc.com'
 
 firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
+# firebase_url = 'https://test-10dad-default-rtdb.firebaseio.com/'
 
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
@@ -117,7 +118,8 @@ def handle_message(event):
     line_ids = get_line_id_list()
     current_app.logger.error(f' line_ids  發生錯誤: {line_ids}')
     # 用firebase儲存對話資料
-    fdb = firebase.FirebaseApplication(firebase_url, None)
+    f_auth = firebase.FirebaseAuthentication('Foxconn@88', 'popvlous@gmail.com')
+    fdb = firebase.FirebaseApplication(firebase_url, authentication=f_auth)
     user_chat_path = f'chat/{user_id}'
     chat_state_path = f'state/{user_id}'
     chat_firebase = fdb.get(user_chat_path, None)
