@@ -118,8 +118,7 @@ def handle_message(event):
     line_ids = get_line_id_list()
     current_app.logger.error(f' line_ids  發生錯誤: {line_ids}')
     # 用firebase儲存對話資料
-    f_auth = firebase.FirebaseAuthentication('Foxconn@88', 'popvlous@gmail.com')
-    fdb = firebase.FirebaseApplication(firebase_url, authentication=f_auth)
+    fdb = firebase.FirebaseApplication(firebase_url, None)
     user_chat_path = f'chat/{user_id}'
     chat_state_path = f'state/{user_id}'
     chat_firebase = fdb.get(user_chat_path, None)
