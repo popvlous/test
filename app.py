@@ -93,6 +93,7 @@ stream_handler.setFormatter(formatter)
 stream_handler.setLevel(logging.DEBUG)
 app.logger.addHandler(stream_handler)
 
+
 genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
 LINE_TOKEN = 'qUYZTP3u08ugL8mCGJNSKJis45VlHO3RnjWdCuWUcoZ'
@@ -103,6 +104,12 @@ pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tessera
 LINE_LOGIN_REDIRECT_DOMAIN = 'https://oasis.pyrarc.com'
 LINE_LOGIN_CLIENT_ID = '2004800649'
 LINE_LOGIN_CLIENT_SECRET = 'f5f94fff941911f161fc540ab0c7c309'
+
+app.logger.debug('DEBUG')
+app.logger.info('INFO')
+app.logger.warning('WARNING')
+app.logger.error('ERROR')
+app.logger.critical('CRITICAL')
 
 
 def s2twp_converter(simplified_text):
