@@ -524,6 +524,18 @@ def vai2():
     print("bot: " + responses.text)
     return responses.text.lstrip()
 
+@app.route('/debug/logs')
+def logs():
+    app.logger.info(f' 取得系統logs')
+    lines = int(request.args.get('l')) if 'l' in request.args.keys() else 100
+
+    def generate():
+        lines_list = list(open("logs/flask.log", encoding='utf-8'))[-lines:]
+        for line in lines_list:
+            yield line
+
+    return app.response_class(generate(), mimetype='text/plain')
+
 def get_chat_model_text(content: str, messages):
     credentials = service_account.Credentials.from_service_account_file("doc/pyrarc-official-3cd65d353646.json")
     vertexai.init(project="198854013711", location="us-central1", credentials=credentials)
