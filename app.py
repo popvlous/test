@@ -10,6 +10,13 @@ from flask import Flask, request, current_app, Response, render_template, redire
 from bs4 import BeautifulSoup
 import time
 
+import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
+
+import dateutil
+from flask.logging import default_handler
+
 from google.oauth2 import service_account
 from selenium.webdriver import Chrome
 from selenium import webdriver
@@ -58,11 +65,33 @@ firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://49a8-211-72-15-212.ngrok-free.app'
+# ngrok_url = 'https://8f1b-211-72-15-212.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 app = Flask(__name__, static_folder='image/static', template_folder='templates', static_url_path='/static')
+
+# 添加log
+# 移除預設的handler
+app.logger.removeHandler(default_handler)
+# 設定 Werkzeug logger 的等級，不顯示請求的log
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+formatter = logging.Formatter(
+    '%(asctime)s [%(thread)d:%(threadName)s] [%(pathname)s:%(lineno)d] [%(levelname)s]: %(message)s')
+fh = TimedRotatingFileHandler(
+    "logs/flask.log", when="D", interval=1, backupCount=15,
+    encoding="UTF-8", delay=False, utc=True)
+fh.setFormatter(formatter)
+fh.setLevel(logging.DEBUG)
+app.logger.addHandler(fh)
+
+# 往螢幕上輸出
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+stream_handler.setLevel(logging.DEBUG)
+app.logger.addHandler(stream_handler)
 
 genai.configure(api_key='AIzaSyA89Mv9_J_ZWuqry0L6vRaoRUBouq1NYDA')
 
