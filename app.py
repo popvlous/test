@@ -152,7 +152,7 @@ def handle_message(event):
     user_id = event.source.user_id
     reply_msg = ''
     line_ids = get_line_id_list()
-    current_app.logger.error(f' line_ids  發生錯誤: {line_ids}')
+    current_app.logger.info(f' line_ids  發生錯誤: {line_ids}')
     # 用firebase儲存對話資料
     fdb = firebase.FirebaseApplication(firebase_url, None)
     user_chat_path = f'chat/{user_id}'
@@ -205,6 +205,7 @@ def handle_message(event):
             response_text = get_chat_model_text(msg, messages)
             try:
                 print(response_text)
+                app.logger.info("Response text: " + response_text)
                 reply_msg = response_text
                 messages.append({"author": "user", "content": msg})
                 messages.append({"author": "assistant", "content": reply_msg})
