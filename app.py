@@ -555,8 +555,17 @@ def get_chat_model_text(content: str, messages):
     }
     # 歷史對話紀錄
     messages_history = []
-    for char_info in messages:
-        messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
+    # for char_info in messages:
+        # messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
+    if len(messages) >= 20:
+        for i in range(len(messages) - 20, len(messages)):
+            messages_history.append(ChatMessage(author=messages[i]['author'], content=messages[i]['content']))
+    elif len(messages) > 0:
+        for i in range(len(messages) - len(messages), len(messages)):
+            messages_history.append(ChatMessage(author=messages[i]['author'], content=messages[i]['content']))
+    else:
+        pass
+
 
     if messages_history:
         chat = chat_model.start_chat(
