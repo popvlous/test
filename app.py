@@ -65,7 +65,7 @@ firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
 # line token 星雲大師說
 # channel_access_token = 'yH/ouqK0h5Ikcg9Gvm8Z1DiY1nU8Jp1KFdudeDvHlE6YehLf8+S26CfKHkVWkMuwGNSY1LMW+cirlNRVukNFwRqezD1cNyYj8P9iuRnKo8JFFbxKFiFkAQ0YleSKF5w7ZNnn44vR+lDygFaamT9kcAdB04t89/1O/w1cDnyilFU='
 # channel_secret = 'e619c7032c0b819501f24680c34e5761'
-# ngrok_url = 'https://8f1b-211-72-15-212.ngrok-free.app'
+# ngrok_url = 'https://6f0d-211-72-15-211.ngrok-free.app'
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
@@ -557,8 +557,8 @@ def get_chat_model_text(content: str, messages):
     messages_history = []
     # for char_info in messages:
         # messages_history.append(ChatMessage(author=char_info['author'], content=char_info['content']))
-    if len(messages) >= 20:
-        for i in range(len(messages) - 20, len(messages)):
+    if len(messages) >= 2:
+        for i in range(len(messages) - 2, len(messages)):
             messages_history.append(ChatMessage(author=messages[i]['author'], content=messages[i]['content']))
     elif len(messages) > 0:
         for i in range(len(messages) - len(messages), len(messages)):
