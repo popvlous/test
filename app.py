@@ -59,7 +59,7 @@ channel_access_token = 'u2lKAnt/xacOJW9IUTrrC77YP0YsrqICiocYE0TzwWr6zsPJLd7+/j/0
 channel_secret = '63cab70334966c3908e47bf86edcfbe7'
 ngrok_url = 'https://oasis.pyrarc.com'
 
-# firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
+firebase_url = 'https://pyrarc-official-default-rtdb.firebaseio.com/'
 # firebase_url = 'https://test-10dad-default-rtdb.firebaseio.com/'
 
 # line token 星雲大師說
