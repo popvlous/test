@@ -261,29 +261,29 @@ def handle_message_g(event):
     # chat_firebase = fdb.get(user_chat_path, None)
     if user_id not in line_ids:
         message = TextSendMessage(text='目前未開通服務，請拷貝本文字或是截圖後、請傳給開發商開通服務\n\n' + user_id)
-        line_bot_api.reply_message(event.reply_token, message)
+        line_bot_api_g.reply_message(event.reply_token, message)
         lineNotifyMessage(LINE_TOKEN, "請開通新用戶 ID: \n" + user_id + "\n用戶傳送文字： \n" + msg)
     elif msg.startswith('/cmdadd'):
         account_msg = msg.split(' ')
         if account_msg[1]:
             save_account_to_file(account_msg[1])
             message = TextSendMessage(text='已添加ID: ' + account_msg[1])
-            line_bot_api.reply_message(event.reply_token, message)
+            line_bot_api_g.reply_message(event.reply_token, message)
         else:
             message = TextSendMessage(text='該命令缺乏ＩＤ值，無法解析')
-            line_bot_api.reply_message(event.reply_token, message)
+            line_bot_api_g.reply_message(event.reply_token, message)
     elif msg.startswith('/cmddel'):
         account_msg = msg.split(' ')
         if account_msg[1] == 'Ucc8d3a2030d9ad30c5c9a76bbdb515fe':
             message = TextSendMessage(text='管理帳號 不得刪除')
-            line_bot_api.reply_message(event.reply_token, message)
+            line_bot_api_g.reply_message(event.reply_token, message)
         elif account_msg[1]:
             delete_account_to_file(account_msg[1])
             message = TextSendMessage(text='已移除ID: ' + account_msg[1])
-            line_bot_api.reply_message(event.reply_token, message)
+            line_bot_api_g.reply_message(event.reply_token, message)
         else:
             message = TextSendMessage(text='該ＩＤ以存在')
-            line_bot_api.reply_message(event.reply_token, message)
+            line_bot_api_g.reply_message(event.reply_token, message)
     else:
         if msg.startswith('/美股'):
             reply_msg = us()
@@ -294,7 +294,7 @@ def handle_message_g(event):
             pic_name = choice(files_lists)
             image = ImageSendMessage(original_content_url=ngrok_url + "/static/" + pic_name,
                                      preview_image_url=ngrok_url + "/static/" + pic_name)
-            line_bot_api.reply_message(event.reply_token, image)
+            line_bot_api_g.reply_message(event.reply_token, image)
             reply_msg = "今日長輩圖"
         else:
             # model = genai.GenerativeModel('gemini-pro')
