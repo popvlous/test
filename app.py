@@ -73,7 +73,7 @@ handler = WebhookHandler(channel_secret)
 # line token 星雲大師說 for Gemini
 channel_access_token_g = '4SnYcxE2d4Wd6IhzL1chHJZB/h/UF/xeXPCemU+FZYwL6Tm1I8YPh1AsSAhzHCrM9j5INbeSvoSht/IKtfEgh0P2v5mUPWRPSK7g6B8S/iepm2dh3X/pFMkbjhJQn56hpXOyGEnYZOZb1EvWO4QrtAdB04t89/1O/w1cDnyilFU='
 channel_secret_g = 'b0954d8eb5bb8941f6cb71e64ceba892'
-ngrok_url_g = 'https://62b8-211-72-15-212.ngrok-free.app'
+ngrok_url_g = 'https://oasis.pyrarc.com'
 line_bot_api_g = LineBotApi(channel_access_token_g)
 handler_g = WebhookHandler(channel_secret_g)
 
